@@ -43,8 +43,6 @@ Nine flaws are deliberately planted and tagged in source (`ARKO-LAB-01` … `ARK
 
 ## Engineering trade-offs
 
-A senior engineer's job includes knowing what *not* to fix yet, and saying so out loud:
-
 - **Vitest is intentionally pinned to the 3.x line**, not the latest major. `@stryker-mutator/vitest-runner@9.2.0` breaks under Vitest 4.x/5.x despite an unrestrictive peer-dependency range — the mutation score silently collapses while CI stays green. The remaining moderate CVE this leaves open ([GHSA-82fw-gwwq-j7x9](https://github.com/advisories/GHSA-82fw-gwwq-j7x9)) is a known, accepted risk pending a coordinated Stryker + Vitest major upgrade, not an unnoticed gap.
 - **No custom seccomp profile, on purpose.** Traced the container's real syscalls, then found the public Docker default-seccomp reference used to validate a tighter profile didn't match what this Engine version actually enforces (verified against `/proc/1/status` on the running container). Shipping a hand-built allow-list against a reference already shown to be wrong would trade a working control for a fragile one. Full writeup: [`docs/CONTAINER-HARDENING.md`](./docs/CONTAINER-HARDENING.md).
 - A mature org would add registry-side image scanning, full IaC policy packs beyond Compose, branch protection + progressive delivery, centralized logging, a WAF, and enterprise secrets management. This repo focuses on what's provable in a CI pipeline: SAST, SCA, mutation-tested auth logic, container reproducibility, and dependency/image bump automation.
