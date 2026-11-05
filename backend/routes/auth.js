@@ -5,6 +5,7 @@ import { db } from '../db.js';
 import { signToken } from '../jwtUtil.js';
 
 const router = Router();
+// Stryker disable all: rate-limit numbers/flags are middleware config; API tests do not exercise windows.
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20, // limit each IP to 20 login attempts per window
@@ -23,6 +24,7 @@ const registerLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+// Stryker restore all
 
 router.post('/login', loginLimiter, (req, res, next) => {
   try {

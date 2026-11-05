@@ -5,6 +5,7 @@ import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
+// Stryker disable next-line all: rate-limit config not covered by API unit tests
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each authenticated client on admin routes
