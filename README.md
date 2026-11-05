@@ -21,17 +21,6 @@ ShieldPay is a full-stack **Node.js + Express + SQLite + React (Vite)** payments
 - **Container & IaC hardening** — zero capabilities, no privilege escalation, read-only root filesystem, and a custom AppArmor profile enforced (with a negative-control test) in CI; Trivy on the built image and the Dockerfile; Conftest turns the hardening into a CI gate, not a one-time config change. Details + a documented, evidence-based decision *not* to ship a custom seccomp profile: [`docs/CONTAINER-HARDENING.md`](./docs/CONTAINER-HARDENING.md).
 - **CI/CD as a security control, not a formality** — `npm audit` is a hard `critical`-severity gate on every PR, not an advisory report nobody reads.
 
-## Applied, not theoretical: a real remediation
-
-The best evidence a pipeline like this works is watching it catch something real. In one pass over this repo's Dependabot backlog:
-
-- Every one of 10 open Dependabot PRs was failing CI — but not for the reason each PR's own diff suggested. Traced it to a **critical CVE already on `main`** (arbitrary file read via Vitest's UI server, [GHSA-5xrq-8626-4rwp](https://github.com/advisories/GHSA-5xrq-8626-4rwp)) that every PR inherited through GitHub's merge-ref check, regardless of what dependency it touched.
-- Patched it *without* jumping to the dependency's latest major — verified that a same-major-line patch preserved compatibility with the mutation-testing toolchain (`@stryker-mutator/vitest-runner`), where a naive major bump silently collapsed the mutation score from ~39% to ~5% while still reporting green.
-- Cleared the backlog: 8 PRs merged clean, plus follow-up dependency overrides for transitively-vulnerable packages (`qs`, `esbuild`) that their direct parents hadn't picked up yet.
-- **Result:** open Dependabot security alerts went from 6 → 2, and 0 critical/high vulnerabilities remain in the dependency tree — the 2 that remain are a single documented, deliberately deferred trade-off (see below), not an oversight.
-
-A separate pass hardening the container (see [`docs/CONTAINER-HARDENING.md`](./docs/CONTAINER-HARDENING.md)) surfaced a second real bug: the production image **couldn't actually start** — a static top-level `import` of a devDependency (`vite`) that the production install doesn't ship. The `docker` CI job built the image on every PR but never ran it, so this shipped silently. Fixed the import, then closed the actual gap: CI now boots the built image under its full hardened runtime flags and fails the build if `/api/health` doesn't come up.
-
 ## Architecture
 
 Trust boundaries, request flow, and component responsibilities: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
